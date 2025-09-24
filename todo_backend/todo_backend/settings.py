@@ -139,3 +139,12 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 }
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'check-due-tasks': {
+        'task': 'todo.tasks.check_due_tasks',
+        'schedule': crontab(minute='*'),
+    },
+}

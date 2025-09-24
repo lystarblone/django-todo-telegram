@@ -4,3 +4,11 @@ venv/
 __pycache__/
 *.pyc
 migrations/
+*.dockerignore
+docker-compose.override.yml
+dump.rdb
+celerybeat-schedule
+celerybeat-schedule.*
+celerybeat.db
+*.sqlite3
+db.sqlite3
