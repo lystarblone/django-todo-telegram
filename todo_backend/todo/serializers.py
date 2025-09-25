@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, Category
+from .models import Task, Category, CustomUser
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,3 +27,18 @@ class TaskSerializer(serializers.ModelSerializer):
         if category_ids is not None:
             instance.categories.set(category_ids)
         return instance
+    
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'username', 'telegram_id')
+
+class LoginSerializer(serializers.ModelSerializer):
+    telegram_id = serializers.CharField()
+
+    def validate(self, data):
+        telegram_id = data.get("telegram_id")
+        user = CustomUser.objects.filter(telegram_id=telegram_id).first()
+        if user:
+            return data
+        raise serializers.ValidationError("Пользователь не найден")
