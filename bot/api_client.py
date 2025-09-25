@@ -12,18 +12,48 @@ class APIClient:
         return headers
 
     def register_or_login(self, telegram_id: int) -> Dict:
-        return {'token': 'test-token', 'user_id': telegram_id}
+        url = f'{self.base_url}auth/telegram/'
+        data = {'telegram_id': telegram_id}
+        try:
+            response = requests.post(url, json=data)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"API error: {str(e)}")
 
     def get_tasks(self, token: str) -> List[Dict]:
-        return [
-            {'id': 1, 'title': 'Test Task', 'category': {'name': 'Work'}, 'created_at': '2025-09-25T15:00:00Z'}
-        ]
+        url = f'{self.base_url}tasks/'
+        try:
+            response = requests.get(url, headers=self._headers(token))
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"API error: {str(e)}")
 
     def get_categories(self, token: str) -> List[Dict]:
-        return [{'id': 1, 'name': 'Work'}, {'id': 2, 'name': 'Personal'}]
+        url = f'{self.base_url}categories/'
+        try:
+            response = requests.get(url, headers=self._headers(token))
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"API error: {str(e)}")
 
     def create_category(self, token: str, name: str) -> Dict:
-        return {'id': 3, 'name': name}
+        url = f'{self.base_url}categories/'
+        data = {'name': name}
+        try:
+            response = requests.post(url, json=data, headers=self._headers(token))
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"API error: {str(e)}")
 
     def create_task(self, token: str, data: Dict) -> Dict:
-        return {'id': 2, 'title': data['title'], 'category': {'name': 'Work'}}
+        url = f'{self.base_url}tasks/'
+        try:
+            response = requests.post(url, json=data, headers=self._headers(token))
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"API error: {str(e)}")
