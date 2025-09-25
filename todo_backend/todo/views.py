@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from .models import Task, Category, CustomUser
 from .serializers import TaskSerializer, CategorySerializer, UserSerializer, LoginSerializer
 
+# Create your views here.
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
