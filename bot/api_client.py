@@ -1,59 +1,64 @@
-import requests
+import httpx
 from typing import Dict, List, Optional
 
-class APIClient:
-    def __init__(self, base_url: str):
-        self.base_url = base_url
+class APIClientAsync:
+    def __init__(self, base_url: str, timeout: float = 10.0):
+        self.base_url = base_url.rstrip("/") + "/"
+        self._timeout = timeout
+        self._client = httpx.AsyncClient(timeout=self._timeout)
 
     def _headers(self, token: Optional[str] = None) -> Dict:
-        headers = {'Content-Type': 'application/json'}
+        headers = {"Content-Type": "application/json"}
         if token:
-            headers['Authorization'] = f'Token {token}'
+            headers["Authorization"] = f"Token {token}"
         return headers
 
-    def register_or_login(self, telegram_id: int) -> Dict:
-        url = f'{self.base_url}auth/telegram/'
-        data = {'telegram_id': telegram_id}
+    async def register_or_login(self, telegram_id: int) -> Dict:
+        url = f"{self.base_url}auth/telegram/"
+        data = {"telegram_id": telegram_id}
         try:
-            response = requests.post(url, json=data)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            resp = await self._client.post(url, json=data)
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as e:
             raise ValueError(f"API error: {str(e)}")
 
-    def get_tasks(self, token: str) -> List[Dict]:
-        url = f'{self.base_url}tasks/'
+    async def get_tasks(self, token: str) -> List[Dict]:
+        url = f"{self.base_url}tasks/"
         try:
-            response = requests.get(url, headers=self._headers(token))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            resp = await self._client.get(url, headers=self._headers(token))
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as e:
             raise ValueError(f"API error: {str(e)}")
 
-    def get_categories(self, token: str) -> List[Dict]:
-        url = f'{self.base_url}categories/'
+    async def get_categories(self, token: str) -> List[Dict]:
+        url = f"{self.base_url}categories/"
         try:
-            response = requests.get(url, headers=self._headers(token))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            resp = await self._client.get(url, headers=self._headers(token))
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as e:
             raise ValueError(f"API error: {str(e)}")
 
-    def create_category(self, token: str, name: str) -> Dict:
-        url = f'{self.base_url}categories/'
-        data = {'name': name}
+    async def create_category(self, token: str, name: str) -> Dict:
+        url = f"{self.base_url}categories/"
+        data = {"name": name}
         try:
-            response = requests.post(url, json=data, headers=self._headers(token))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            resp = await self._client.post(url, json=data, headers=self._headers(token))
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as e:
             raise ValueError(f"API error: {str(e)}")
 
-    def create_task(self, token: str, data: Dict) -> Dict:
-        url = f'{self.base_url}tasks/'
+    async def create_task(self, token: str, data: Dict) -> Dict:
+        url = f"{self.base_url}tasks/"
         try:
-            response = requests.post(url, json=data, headers=self._headers(token))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
+            resp = await self._client.post(url, json=data, headers=self._headers(token))
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPError as e:
             raise ValueError(f"API error: {str(e)}")
+
+    async def close(self):
+        await self._client.aclose()
