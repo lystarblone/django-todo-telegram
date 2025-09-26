@@ -2,7 +2,6 @@ from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 
-# Create your models here.
 class IDSequence(models.Model):
     name = models.CharField(max_length=50, unique=True)
     last_id = models.PositiveIntegerField(default=0)
@@ -35,24 +34,27 @@ class BaseModel(models.Model):
 
 class CustomUser(AbstractUser, BaseModel):
     email = models.EmailField(unique=True)
+    telegram_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
 
     class Meta:
         db_table = 'auth_user'
 
 class Category(BaseModel):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
+    class Meta:
+        unique_together = ('name', 'user')
+
 class Task(BaseModel):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='tasks')
     categories = models.ManyToManyField(Category, blank=True)
 
     def __str__(self):

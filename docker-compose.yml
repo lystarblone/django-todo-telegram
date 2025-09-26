@@ -1,0 +1,116 @@
+services:
+  django:
+    working_dir: /app
+    build:
+      context: ./todo_backend
+      dockerfile: Dockerfile
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=todo
+      - DB_USER=pivan
+      - DB_PASSWORD=3775
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./todo_backend:/app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "sleep 10 &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=todo
+      - POSTGRES_USER=pivan
+      - POSTGRES_PASSWORD=3775
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pivan -d todo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    command: python main.py
+    working_dir: /app
+    environment:
+      - BOT_TOKEN=7957079249:AAHUbQJ09HST_AslSEOxpuh6_eXr_aiBDNw
+      - API_BASE_URL=http://django:8000/api/
+      - TIMEZONE=America/Adak
+      - PYTHONPATH=/app
+    depends_on:
+      django:
+        condition: service_started
+    volumes:
+      - ./bot:/app
+
+  celery:
+    build:
+      context: ./todo_backend
+      dockerfile: Dockerfile
+    user: appuser
+    command: sh -c "sleep 10 && celery -A todo_backend.celery_app worker -l info --logfile=/app/celery.log"
+    working_dir: /app
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=todo
+      - DB_USER=pivan
+      - DB_PASSWORD=3775
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./todo_backend:/app
+
+  celery-beat:
+    build:
+      context: ./todo_backend
+      dockerfile: Dockerfile
+    user: appuser
+    command: sh -c "sleep 10 && celery -A todo_backend.celery_app beat -l info --logfile=/app/celery_beat.log"
+    working_dir: /app
+    environment:
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=todo
+      - DB_USER=pivan
+      - DB_PASSWORD=3775
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./todo_backend:/app
+
+volumes:
+  postgres_data:
+  redis_data:

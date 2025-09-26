@@ -5,12 +5,13 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram_dialog import setup_dialogs, StartMode
 from aiogram.filters import Command
-from bot.config import BOT_TOKEN, API_BASE_URL
-from bot.api_client import APIClientAsync
-from bot.middlewares import AuthMiddleware
-from bot.handlers.start import start
-from bot.handlers.tasks import show_tasks
-from bot.dialogs.add_task_dialog import add_task_dialog
+from config import BOT_TOKEN, API_BASE_URL
+from api_client import APIClientAsync
+from middlewares import AuthMiddleware
+from handlers.start import start
+from handlers.tasks import show_tasks
+from dialogs.add_task_dialog import add_task_dialog
+from states import AddTaskDialog
 
 logging.basicConfig(level=logging.INFO)
 
@@ -29,7 +30,7 @@ async def main():
 
     @dp.message(Command("add"))
     async def start_add_dialog(message: types.Message, dialog_manager):
-        await dialog_manager.start("add_task:title", mode=StartMode.RESET_STACK)
+        await dialog_manager.start(AddTaskDialog.title, mode=StartMode.RESET_STACK)
 
     setup_dialogs(dp)
 

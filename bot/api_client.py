@@ -1,5 +1,8 @@
 import httpx
 from typing import Dict, List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 class APIClientAsync:
     def __init__(self, base_url: str, timeout: float = 10.0):
@@ -15,13 +18,17 @@ class APIClientAsync:
 
     async def register_or_login(self, telegram_id: int) -> Dict:
         url = f"{self.base_url}auth/telegram/"
-        data = {"telegram_id": telegram_id}
+        data = {"telegram_id": str(telegram_id)}
         try:
             resp = await self._client.post(url, json=data)
             resp.raise_for_status()
-            return resp.json()
+            result = resp.json()
+            logger.info(f"Auth response: {result}")
+            return result
         except httpx.HTTPError as e:
-            raise ValueError(f"API error: {str(e)}")
+            error_msg = f"API error: {e}, Status: {e.response.status_code if hasattr(e, 'response') else 'No response'}, Response: {e.response.text if hasattr(e, 'response') else 'No response'}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
     async def get_tasks(self, token: str) -> List[Dict]:
         url = f"{self.base_url}tasks/"
@@ -30,6 +37,7 @@ class APIClientAsync:
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPError as e:
+            logger.error(f"Failed to get tasks: {e}")
             raise ValueError(f"API error: {str(e)}")
 
     async def get_categories(self, token: str) -> List[Dict]:
@@ -39,6 +47,7 @@ class APIClientAsync:
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPError as e:
+            logger.error(f"Failed to get categories: {e}")
             raise ValueError(f"API error: {str(e)}")
 
     async def create_category(self, token: str, name: str) -> Dict:
@@ -49,15 +58,19 @@ class APIClientAsync:
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPError as e:
+            logger.error(f"Failed to create category: {e}")
             raise ValueError(f"API error: {str(e)}")
 
     async def create_task(self, token: str, data: Dict) -> Dict:
         url = f"{self.base_url}tasks/"
+        if "category" in data:
+            data["category_ids"] = [data.pop("category")]
         try:
             resp = await self._client.post(url, json=data, headers=self._headers(token))
             resp.raise_for_status()
             return resp.json()
         except httpx.HTTPError as e:
+            logger.error(f"Failed to create task: {e}")
             raise ValueError(f"API error: {str(e)}")
 
     async def close(self):

@@ -1,7 +1,8 @@
 from aiogram import types
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
-from .api_client import APIClientAsync
-from bot.api_client import APIClientAsync
+from api_client import APIClientAsync
+import aiohttp
+import logging
 
 class AuthMiddleware(BaseMiddleware):
     def __init__(self, api_client: APIClientAsync):

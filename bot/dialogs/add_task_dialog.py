@@ -5,8 +5,8 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram import types
 from datetime import datetime
 import pytz
-from bot.config import TIMEZONE
-from bot.states import AddTaskDialog
+from config import TIMEZONE
+from states import AddTaskDialog
 
 async def start_add(call: types.Message, dialog_manager: DialogManager):
     await dialog_manager.start(AddTaskDialog.title, data={})
@@ -53,7 +53,7 @@ async def on_category_selected(event: types.CallbackQuery, select: Select, manag
         "title": data["title"],
         "description": data.get("description", ""),
         "due_date": data["due_date"],
-        "category": int(item_id),
+        "category": item_id,
     }
 
     try:
